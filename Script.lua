@@ -1,201 +1,233 @@
-local ok,err=pcall(function()
-
 local Players=game:GetService("Players")
 local RunService=game:GetService("RunService")
 local UIS=game:GetService("UserInputService")
+local TweenService=game:GetService("TweenService")
+local LocalPlayer=Players.LocalPlayer
+local Camera=workspace.CurrentCamera
 
-local LP=Players.LocalPlayer
-if not LP then return end
+---
 
-local PlayerGui=LP:WaitForChild("PlayerGui")
-local Cam=workspace.CurrentCamera
+-- INTRO
 
--- GUI
-local gui=Instance.new("ScreenGui")
-gui.Name="ScyklHub"
-gui.ResetOnSpawn=false
-gui.Parent=PlayerGui
-
-local frame=Instance.new("Frame",gui)
-frame.Size=UDim2.new(0,220,0,140)
-frame.Position=UDim2.new(0.05,0,0.3,0)
-frame.BackgroundColor3=Color3.fromRGB(20,20,20)
-frame.BorderSizePixel=0
-
-local title=Instance.new("TextLabel",frame)
-title.Size=UDim2.new(1,0,0,30)
-title.BackgroundTransparency=1
-title.Text="Scykl Hub"
-title.TextColor3=Color3.new(1,1,1)
-title.Font=Enum.Font.SourceSansBold
-title.TextSize=20
-
-local toggle=Instance.new("TextButton",frame)
-toggle.Size=UDim2.new(0.9,0,0,35)
-toggle.Position=UDim2.new(0.05,0,0,45)
-toggle.BackgroundColor3=Color3.fromRGB(40,40,40)
-toggle.TextColor3=Color3.new(1,1,1)
-toggle.Font=Enum.Font.SourceSansBold
-toggle.TextSize=18
-toggle.Text="Aimbot: ON"
-
-local info=Instance.new("TextLabel",frame)
-info.Size=UDim2.new(1,0,0,20)
-info.Position=UDim2.new(0,0,1,-20)
-info.BackgroundTransparency=1
-info.Text="Hold Q to aim"
-info.TextColor3=Color3.fromRGB(180,180,180)
-info.Font=Enum.Font.SourceSans
-info.TextSize=14
-
--- drag mobile/pc
 do
-local dragging=false
-local dragStart,startPos
+local g=Instance.new("ScreenGui",game.CoreGui)
+g.IgnoreGuiInset=true
+local f=Instance.new("Frame",g)
+f.Size=UDim2.fromScale(1,1)
+f.BackgroundColor3=Color3.new(0,0,0)
 
-frame.InputBegan:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1
-or i.UserInputType==Enum.UserInputType.Touch then
-dragging=true
-dragStart=i.Position
-startPos=frame.Position
+local t=Instance.new("TextLabel",f)
+t.Size=UDim2.fromScale(1,1)
+t.BackgroundTransparency=1
+t.Text="Made by Scykl"
+t.TextColor3=Color3.new(1,1,1)
+t.Font=Enum.Font.GothamBlack
+t.TextScaled=true
+t.TextTransparency=1
+
+TweenService:Create(t,TweenInfo.new(.8),{TextTransparency=0}):Play()
+task.wait(1.6)
+TweenService:Create(f,TweenInfo.new(.8),{BackgroundTransparency=1}):Play()
+TweenService:Create(t,TweenInfo.new(.8),{TextTransparency=1}):Play()
+task.wait(.9)
+g:Destroy()
 end
+
+---
+
+-- HUB BASE (SEU HUB PRETO)
+
+local gui=Instance.new("ScreenGui",game.CoreGui)
+gui.Name="ScyklHub"
+
+local main=Instance.new("Frame",gui)
+main.Size=UDim2.new(0,520,0,360)
+main.Position=UDim2.new(.5,-260,.5,-180)
+main.BackgroundColor3=Color3.fromRGB(20,18,30)
+main.Active=true
+main.Draggable=true
+Instance.new("UICorner",main).CornerRadius=UDim.new(0,14)
+
+---
+
+-- BOTÃO MINIMIZAR
+
+local minimize=Instance.new("TextButton",main)
+minimize.Size=UDim2.new(0,36,0,36)
+minimize.Position=UDim2.new(1,-42,0,6)
+minimize.Text="-"
+minimize.TextScaled=true
+minimize.BackgroundColor3=Color3.fromRGB(90,70,160)
+Instance.new("UICorner",minimize).CornerRadius=UDim.new(1,0)
+
+local bubble=Instance.new("TextButton",gui)
+bubble.Visible=false
+bubble.Size=UDim2.new(0,60,0,60)
+bubble.BackgroundColor3=Color3.fromRGB(90,70,160)
+bubble.Text=""
+bubble.Active=true
+bubble.Draggable=true
+Instance.new("UICorner",bubble).CornerRadius=UDim.new(1,0)
+
+minimize.MouseButton1Click:Connect(function()
+main.Visible=false
+bubble.Visible=true
+bubble.Position=UDim2.new(0,40,0,200)
 end)
 
-UIS.InputChanged:Connect(function(i)
-if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement
-or i.UserInputType==Enum.UserInputType.Touch) then
-local delta=i.Position-dragStart
-frame.Position=UDim2.new(
-startPos.X.Scale,startPos.X.Offset+delta.X,
-startPos.Y.Scale,startPos.Y.Offset+delta.Y)
-end
+bubble.MouseButton1Click:Connect(function()
+main.Visible=true
+bubble.Visible=false
 end)
 
-UIS.InputEnded:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1
-or i.UserInputType==Enum.UserInputType.Touch then
-dragging=false
-end
-end)
-end
+---
 
--- settings
-local S={
-aimbot=true,
-holding=false,
-radius=130,
-smooth=0.15,
-teamCheck=true,
-visible=true,
-part="Head"
+-- CONFIG
+
+local Config={
+ESP=true,
+Aimbot=false,
+TeamCheck=true
 }
 
-toggle.MouseButton1Click:Connect(function()
-S.aimbot=not S.aimbot
-toggle.Text="Aimbot: "..(S.aimbot and "ON" or "OFF")
-end)
+---
 
--- FOV circle
-local circle=Drawing.new("Circle")
-circle.Thickness=2
-circle.NumSides=40
-circle.Radius=S.radius
-circle.Filled=false
-circle.Visible=true
+-- ESP COMPLETO (CAIXA + ANTENA + NICK + METROS)
+
+local drawings={}
+
+local function createESP(plr)
+if plr==LocalPlayer then return end
+local box=Drawing.new("Square")
+box.Color=Color3.fromRGB(0,255,120)
+box.Thickness=2
+box.Filled=false
+
+local line=Drawing.new("Line")
+line.Color=box.Color
+line.Thickness=2
+
+local name=Drawing.new("Text")
+name.Size=16
+name.Center=true
+name.Outline=true
+name.Color=Color3.new(1,1,1)
+
+drawings[plr]={box,line,name}
+end
+
+for _,p in pairs(Players:GetPlayers()) do createESP(p) end
+Players.PlayerAdded:Connect(createESP)
 
 RunService.RenderStepped:Connect(function()
-circle.Position=Vector2.new(Cam.ViewportSize.X/2,Cam.ViewportSize.Y/2)
-circle.Radius=S.radius
+for plr,obj in pairs(drawings) do
+local char=plr.Character
+local hrp=char and char:FindFirstChild("HumanoidRootPart")
+local hum=char and char:FindFirstChildOfClass("Humanoid")
+
+if Config.ESP and hrp and hum and hum.Health>0 then
+local pos,vis=Camera:WorldToViewportPoint(hrp.Position)
+if vis then
+local dist=(Camera.CFrame.Position-hrp.Position).Magnitude
+local scale=1/(dist*0.05)*100
+local size=Vector2.new(30,50)*scale
+
+obj.box.Size=size
+obj.box.Position=Vector2.new(pos.X-size.X/2,pos.Y-size.Y/2)
+obj.box.Visible=true
+
+obj.line.From=Vector2.new(pos.X,pos.Y-size.Y/2)
+obj.line.To=Vector2.new(pos.X,pos.Y-size.Y/2-18)
+obj.line.Visible=true
+
+obj.name.Text=plr.Name.." - "..math.floor(dist).."m"
+obj.name.Position=Vector2.new(pos.X,pos.Y-size.Y/2-30)
+obj.name.Visible=true
+else
+obj.box.Visible=false
+obj.line.Visible=false
+obj.name.Visible=false
+end
+else
+obj.box.Visible=false
+obj.line.Visible=false
+obj.name.Visible=false
+end
+end
 end)
 
--- input
-UIS.InputBegan:Connect(function(i,g)
-if not g and i.KeyCode==Enum.KeyCode.Q then
-S.holding=true
-end
+---
+
+-- AIMBOT MOBILE (SEM Q / COM FOV CIRCLE)
+
+local fov=Drawing.new("Circle")
+fov.Radius=120
+fov.Filled=false
+fov.Thickness=2
+fov.Color=Color3.fromRGB(140,110,255)
+fov.Visible=true
+
+local aimBtn=Instance.new("TextButton",main)
+aimBtn.Size=UDim2.new(0,140,0,40)
+aimBtn.Position=UDim2.new(0,20,1,-60)
+aimBtn.Text="Aimbot: OFF"
+aimBtn.BackgroundColor3=Color3.fromRGB(60,50,100)
+aimBtn.TextScaled=true
+Instance.new("UICorner",aimBtn).CornerRadius=UDim.new(0,10)
+
+aimBtn.MouseButton1Click:Connect(function()
+Config.Aimbot=not Config.Aimbot
+aimBtn.Text=Config.Aimbot and "Aimbot: ON" or "Aimbot: OFF"
 end)
 
-UIS.InputEnded:Connect(function(i)
-if i.KeyCode==Enum.KeyCode.Q then
-S.holding=false
-end
-end)
-
--- helpers
-local function root()
-local c=LP.Character
-return c and c:FindFirstChild("HumanoidRootPart")
-end
-
-local function sameTeam(p)
-if not S.teamCheck then return false end
-if not LP.Team then return false end
-return p.Team==LP.Team
-end
-
-local function visible(part)
-if not S.visible then return true end
-local origin=Cam.CFrame.Position
-local dir=part.Position-origin
-local ray=RaycastParams.new()
-ray.FilterType=Enum.RaycastFilterType.Exclude
-ray.FilterDescendantsInstances={LP.Character,part.Parent}
-local r=workspace:Raycast(origin,dir,ray)
-return (not r) or r.Instance:IsDescendantOf(part.Parent)
-end
-
-local function target()
-local r=root()
-if not r then return end
-
-local best=nil
-local bestDist=math.huge
-local center=Vector2.new(Cam.ViewportSize.X/2,Cam.ViewportSize.Y/2)
-
-for _,p in ipairs(Players:GetPlayers()) do
-if p~=LP and p.Character and not sameTeam(p) then
-
-local char=p.Character
-local hum=char:FindFirstChildOfClass("Humanoid")
-local hrp=char:FindFirstChild("HumanoidRootPart")
-local part=char:FindFirstChild(S.part) or hrp
-
-if hum and hrp and part and hum.Health>0 then
-
-local pos,on=Cam:WorldToViewportPoint(part.Position)
-if on then
-local distScreen=(Vector2.new(pos.X,pos.Y)-center).Magnitude
-if distScreen<=S.radius and visible(part) then
-local d=(r.Position-hrp.Position).Magnitude
-if d<bestDist then
-bestDist=d
-best=part
-end
-end
-end
-
-end
-end
-end
-
-return best
-end
-
--- main loop
 RunService.RenderStepped:Connect(function()
+local m=UIS:GetMouseLocation()
+fov.Position=m
 
-if not S.aimbot then return end
-if not S.holding then return end
+if not Config.Aimbot then return end
 
-local t=target()
-if not t then return end
+local closest=nil
+local dist=1e9
 
-local cf=CFrame.lookAt(Cam.CFrame.Position,t.Position)
-Cam.CFrame=Cam.CFrame:Lerp(cf,math.clamp(1-S.smooth,0.02,0.98))
+for _,plr in pairs(Players:GetPlayers()) do
+if plr~=LocalPlayer then
+if not Config.TeamCheck or plr.Team~=LocalPlayer.Team then
+local char=plr.Character
+local head=char and char:FindFirstChild("Head")
+local hum=char and char:FindFirstChildOfClass("Humanoid")
+if head and hum and hum.Health>0 then
+local pos,vis=Camera:WorldToViewportPoint(head.Position)
+if vis then
+local d=(Vector2.new(pos.X,pos.Y)-m).Magnitude
+if d<fov.Radius and d<dist then
+dist=d
+closest=head
+end
+end
+end
+end
+end
+end
 
+if closest then
+Camera.CFrame=CFrame.new(Camera.CFrame.Position,closest.Position)
+end
 end)
 
-end)
+---
 
-if not ok then warn(err) end
+-- SAVE CONFIG (SIMPLES)
+
+local save=Instance.new("TextButton",main)
+save.Size=UDim2.new(0,140,0,36)
+save.Position=UDim2.new(1,-160,1,-60)
+save.Text="Save Config"
+save.TextScaled=true
+save.BackgroundColor3=Color3.fromRGB(80,70,140)
+Instance.new("UICorner",save).CornerRadius=UDim.new(0,10)
+
+save.MouseButton1Click:Connect(function()
+if writefile then
+writefile("ScyklHub.json",game:GetService("HttpService"):JSONEncode(Config))
+end
+end)
